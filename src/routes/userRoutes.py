@@ -1,6 +1,6 @@
 from flask import Blueprint, request
-from src.controllers.userController import crear_usuario, crear_usuario_base,login_usuario, obtener_usuario, eliminar_usuario
-from flask_jwt_extended import JWTManager
+from src.controllers.userController import actualizar_usuario, crear_usuario, crear_usuario_base, login_usuario, obtener_todos_usuarios, obtener_usuario, eliminar_usuario
+from flask_jwt_extended import jwt_required
 
 usuario_blueprint = Blueprint('usuarios', __name__)
 
@@ -20,10 +20,19 @@ def login_ruta():
     return login_usuario(data)
 
 @usuario_blueprint.route('/profile', methods=['GET'])
+@jwt_required()  
 def obtener_usuario_ruta():
     return obtener_usuario()
 
+@usuario_blueprint.route('/users', methods=['GET'])  
+def obtener_todos_usuarios_ruta():
+    return obtener_todos_usuarios()
+
+@usuario_blueprint.route('/users', methods=['PUT'])  
+def actualizar_usuario_ruta():
+    return actualizar_usuario()
+
 @usuario_blueprint.route('/users/<int:user_id>', methods=['DELETE'])
+@jwt_required()  # Requiere autenticación JWT
 def eliminar_usuario_ruta(user_id):
     return eliminar_usuario(user_id)
-
