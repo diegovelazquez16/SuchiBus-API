@@ -1,6 +1,7 @@
+import create_access_token, jwt_required, get_jwt_identity
 from flask import jsonify, request
 from src.models.user import User, db
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended
 
 def crear_usuario(data):
     nombre = data.get('nombre')
@@ -14,7 +15,8 @@ def crear_usuario(data):
     if User.query.filter_by(email=email).first():
         return jsonify({"mensaje": "El email ya está registrado"}), 400
 
-    nuevo_usuario = User(nombre=nombre, email=email, password=password, tipo_usuario=tipo_usuario)
+    nuevo_usuario = User(nombre=nombre, email=email, password= password, tipo_usuario=tipo_usuario)
+    nuevo_usuario.set_password(password) 
     db.session.add(nuevo_usuario)
     db.session.commit()
 
@@ -25,6 +27,7 @@ def crear_usuario(data):
         "email": nuevo_usuario.email,
         "tipo_usuario": tipo_usuario
     }), 201
+
 
 def crear_usuario_base(data):
     nombre = data.get('nombre')
@@ -52,12 +55,17 @@ def login_usuario(data):
     email = data.get('email')
     password = data.get('password')
 
+    print(f"Email ingresado: {email}")  
+    print(f"Contraseña ingresada: {password}") 
+
     user = User.query.filter_by(email=email).first()
 
     if not user:
+        print("No se encontró el usuario.") 
         return jsonify({"mensaje": "Credenciales inválidas"}), 401
 
     if not user.check_password(password):
+        print("Contraseña incorrecta.") 
         return jsonify({"mensaje": "Credenciales inválidas"}), 401
 
     access_token = create_access_token(identity=user.id)
@@ -66,6 +74,7 @@ def login_usuario(data):
         "mensaje": "Inicio de sesión exitoso",
         "token": access_token
     }), 200
+
 
 @jwt_required()
 def obtener_usuario():

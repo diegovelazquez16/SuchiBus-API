@@ -1,3 +1,4 @@
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from dotenv import load_dotenv
@@ -20,14 +21,14 @@ class User(db.Model):
     def __init__(self, nombre, email, password, tipo_usuario):
         self.nombre = nombre
         self.email = email
-        self.password = bcrypt.generate_password_hash(password).decode('utf-8')
+        self.set_password(password)  
         self.tipo_usuario = tipo_usuario
 
-    def check_password(self, password):
-        return bcrypt.check_password_hash(self.password, password)
+    def set_password(self, password):
+        self.password = generate_password_hash(password)
 
-    def __repr__(self):
-        return f'<User {self.nombre}>'
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
 
 
 class Pasajero(User):
