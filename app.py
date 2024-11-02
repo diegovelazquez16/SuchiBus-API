@@ -10,6 +10,8 @@ def create_app():
     app.config.from_object(config['development'])
     db.init_app(app)
     jwt = JWTManager(app)
+    with app.app_context():
+        db.create_all()
     app.register_blueprint(usuario_blueprint)
     return app
 

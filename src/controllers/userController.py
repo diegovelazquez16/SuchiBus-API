@@ -1,7 +1,8 @@
-import create_access_token, jwt_required, get_jwt_identity
 from flask import jsonify, request
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from src.models.user import User, db
-from flask_jwt_extended
+from werkzeug.security import generate_password_hash, check_password_hash
+
 
 def crear_usuario(data):
     nombre = data.get('nombre')
@@ -137,6 +138,96 @@ def actualizar_usuario():
         "email": user.email,
         "tipo_usuario": user.tipo_usuario
     }), 200
+@jwt_required()
+def eliminar_usuario(user_id):
+    user = User.query.get(user_id)
+
+    if not user:
+        return jsonify({"mensaje": "Usuario no encontrado"}), 404
+
+    db.session.delete(user)
+    db.session.commit()
+
+    return jsonify({"mensaje": "Usuario eliminado"}), 200
+
+# Inicio de sesión
+def login_usuario(data):
+    email = data.get('email')
+    password = data.get('password')
+
+    user = User.query.filter_by(email=email).first()
+
+    if not user or not user.check_password(password):
+        return jsonify({"mensaje": "Credenciales inválidas"}), 401
+
+    access_token = create_access_token(identity=user.id)
+
+    return jsonify({
+        "mensaje": "Inicio de sesión exitoso",
+        "token": access_token
+    }), 200
+
+@jwt_required()
+def obtener_usuario():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+
+    if not user:
+        return jsonify({"mensaje": "Usuario no encontrado"}), 404
+
+    return jsonify({
+        "id": user.id,
+        "nombre": user.nombre,
+        "email": user.email,
+        "tipo_usuario": user.tipo_usuario
+    }), 200
+
+# Obtener todos los usuarios
+@jwt_required()
+def obtener_todos_usuarios():
+    usuarios = User.query.all()
+    usuarios_list = [{
+        "id": usuario.id,
+        "nombre": usuario.nombre,
+        "email": usuario.email,
+        "tipo_usuario": usuario.tipo_usuario
+    } for usuario in usuarios]
+
+    return jsonify(usuarios_list), 200
+
+# Actualizar datos del usuario
+@jwt_required()
+def actualizar_usuario():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+
+    if not user:
+        return jsonify({"mensaje": "Usuario no encontrado"}), 404
+
+    data = request.get_json()
+    nombre = data.get('nombre')
+    email = data.get('email')
+    tipo_usuario = data.get('tipo_usuario')
+
+    if nombre:
+        user.nombre = nombre
+    if email:
+        if User.query.filter(User.email == email, User.id != user_id).first():
+            return jsonify({"mensaje": "El email ya está registrado"}), 400
+        user.email = email
+    if tipo_usuario:
+        user.tipo_usuario = tipo_usuario
+
+    db.session.commit()
+
+    return jsonify({
+        "mensaje": "Datos del usuario actualizados",
+        "id": user.id,
+        "nombre": user.nombre,
+        "email": user.email,
+        "tipo_usuario": user.tipo_usuario
+    }), 200
+
 @jwt_required()
 def eliminar_usuario(user_id):
     user = User.query.get(user_id)
