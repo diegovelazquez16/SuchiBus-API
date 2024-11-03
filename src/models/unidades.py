@@ -1,4 +1,3 @@
-# src/models/unidades.py
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 import os
@@ -6,10 +5,10 @@ from sqlalchemy import Enum
 
 load_dotenv()
 
-schema_name = os.getenv('SCHEMA_NAME', 'public')  # 'public' como valor por defecto
+schema_name = os.getenv('SCHEMA_NAME', 'public')  
 
 from .user import db
-from .terminal import Terminal  # Importa Terminal para definir la relación
+from .terminal import Terminal 
 
 class Unidad(db.Model):
     __tablename__ = 'unidades'
@@ -20,10 +19,8 @@ class Unidad(db.Model):
     numPlaca = db.Column(db.String(50), unique=True, nullable=False)
     status = db.Column(Enum("Lleno", "Con cupo", name="status_enum"), nullable=False)
 
-    # Clave foránea hacia Terminal
     terminal_id = db.Column(db.Integer, db.ForeignKey(f'{schema_name}.terminales.id'), nullable=False)
 
-    # Relación con el modelo Terminal
     terminal = db.relationship('Terminal', backref=db.backref('unidades', lazy=True))
 
     def __init__(self, modelo, numPlaca, status, terminal_id):
@@ -31,4 +28,3 @@ class Unidad(db.Model):
         self.numPlaca = numPlaca
         self.status = status
         self.terminal_id = terminal_id
-#ok?
