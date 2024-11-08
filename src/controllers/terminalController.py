@@ -8,12 +8,28 @@ def crear_terminal(data):
     colonia = data.get('colonia')
     calle = data.get('calle')
     num = data.get('num')
-    horario = data.get('horario')
+    horarioApertura = data.get('horarioApertura')
+    horarioCierre = data.get('horarioCierre')
+    telefono = data.get('telefono')
 
-    if not all([nombre, ciudad, colonia, calle, num, horario]):
+    if not all([nombre, ciudad, colonia, calle, num, horarioApertura, horarioCierre, telefono]):
         return jsonify({"mensaje": "Faltan campos obligatorios"}), 400
 
-    nueva_terminal = Terminal(nombre=nombre, ciudad=ciudad, colonia=colonia, calle=calle, num=num, horario=horario)
+    direccion = {
+        "ciudad": ciudad,
+        "colonia": colonia,
+        "calle": calle,
+        "num": num
+    }
+
+    nueva_terminal = Terminal(
+        nombre=nombre,
+        direccion=direccion,
+        horarioApertura=horarioApertura,
+        horarioCierre=horarioCierre,
+        telefono=telefono
+    )
+
     db.session.add(nueva_terminal)
     db.session.commit()
 
@@ -23,36 +39,40 @@ def crear_terminal(data):
         "nombre": nueva_terminal.nombre
     }), 201
 
-@jwt_required()
+
 def obtener_terminal(id):
     terminal = Terminal.query.get(id)
     if not terminal:
         return jsonify({"mensaje": "Terminal no encontrada"}), 404
 
+    direccion = terminal.get_direccion()
+
     return jsonify({
         "id": terminal.id,
         "nombre": terminal.nombre,
-        "ciudad": terminal.ciudad,
-        "colonia": terminal.colonia,
-        "calle": terminal.calle,
-        "num": terminal.num,
-        "horario": terminal.horario
+        "direccion": direccion,
+        "horarioApertura": terminal.horarioApertura,
+        "horarioCierre": terminal.horarioCierre,
+        "telefono": terminal.telefono
     }), 200
 
-@jwt_required()
+
+
 def obtener_todas_terminales():
     terminales = Terminal.query.all()
     terminales_list = [{
         "id": terminal.id,
         "nombre": terminal.nombre,
-        "ciudad": terminal.ciudad,
-        "colonia": terminal.colonia,
-        "calle": terminal.calle,
-        "num": terminal.num,
-        "horario": terminal.horario
+        "direccion": terminal.direccion,  
+        "horarioApertura": terminal.horarioApertura,
+        "horarioCierre": terminal.horarioCierre,
+        "telefono": terminal.telefono
     } for terminal in terminales]
 
     return jsonify(terminales_list), 200
+
+
+
 
 @jwt_required()
 def actualizar_terminal(id, data):
@@ -61,11 +81,16 @@ def actualizar_terminal(id, data):
         return jsonify({"mensaje": "Terminal no encontrada"}), 404
 
     terminal.nombre = data.get('nombre', terminal.nombre)
-    terminal.ciudad = data.get('ciudad', terminal.ciudad)
-    terminal.colonia = data.get('colonia', terminal.colonia)
-    terminal.calle = data.get('calle', terminal.calle)
-    terminal.num = data.get('num', terminal.num)
-    terminal.horario = data.get('horario', terminal.horario)
+    terminal.horarioApertura = data.get('horarioApertura', terminal.horarioApertura)
+    terminal.horarioCierre = data.get('horarioCierre', terminal.horarioCierre)
+    terminal.telefono = data.get('telefono', terminal.telefono)
+
+    nueva_direccion = data.get('direccion')
+    if nueva_direccion:
+        direccion_actual = terminal.direccion or {}
+        
+        direccion_actual.update(nueva_direccion)
+        terminal.direccion = direccion_actual
 
     db.session.commit()
 
