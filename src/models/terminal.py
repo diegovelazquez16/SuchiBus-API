@@ -1,6 +1,8 @@
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 import os
+from sqlalchemy.dialects.postgresql import JSONB
+import json
 
 load_dotenv()
 
@@ -14,16 +16,16 @@ class Terminal(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
-    ciudad = db.Column(db.String(100), nullable=False)
-    colonia = db.Column(db.String(100), nullable=False)
-    calle = db.Column(db.String(100), nullable=False)
-    num = db.Column(db.String(20), nullable=False)
-    horario = db.Column(db.String(100), nullable=False)
+    direccion = db.Column(JSONB, nullable=True)
+    horarioApertura = db.Column(db.String(100), nullable=False)
+    horarioCierre = db.Column(db.String(100), nullable=False)
+    telefono = db.Column(db.BigInteger, nullable=False)
 
-    def __init__(self, nombre, ciudad, colonia, calle, num, horario):
+    def __init__(self, nombre, direccion, horarioApertura, horarioCierre, telefono):
         self.nombre = nombre
-        self.ciudad = ciudad
-        self.colonia = colonia
-        self.calle = calle
-        self.num = num
-        self.horario = horario
+        self.horarioApertura = horarioApertura
+        self.horarioCierre = horarioCierre
+        self.telefono = telefono
+        self.direccion = json.dumps(direccion) if direccion else None
+    def get_direccion(self):
+        return json.loads(self.direccion) if self.direccion else {}
