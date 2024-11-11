@@ -1,6 +1,7 @@
 from flask import jsonify, request
 from src.models.terminal import Terminal, db
 from flask_jwt_extended import jwt_required
+import json
 
 def crear_terminal(data):
     nombre = data.get('nombre')
@@ -39,7 +40,6 @@ def crear_terminal(data):
         "nombre": nueva_terminal.nombre
     }), 201
 
-
 def obtener_terminal(id):
     terminal = Terminal.query.get(id)
     if not terminal:
@@ -55,7 +55,6 @@ def obtener_terminal(id):
         "horarioCierre": terminal.horarioCierre,
         "telefono": terminal.telefono
     }), 200
-
 
 
 def obtener_todas_terminales():
@@ -74,7 +73,7 @@ def obtener_todas_terminales():
 
 
 
-@jwt_required()
+
 def actualizar_terminal(id, data):
     terminal = Terminal.query.get(id)
     if not terminal:
@@ -85,18 +84,18 @@ def actualizar_terminal(id, data):
     terminal.horarioCierre = data.get('horarioCierre', terminal.horarioCierre)
     terminal.telefono = data.get('telefono', terminal.telefono)
 
-    nueva_direccion = data.get('direccion')
-    if nueva_direccion:
-        direccion_actual = terminal.direccion or {}
-        
+    nueva_direccion = data.get('direccion', {})
+    if isinstance(nueva_direccion, dict):
+        direccion_actual = terminal.get_direccion()  
+
         direccion_actual.update(nueva_direccion)
-        terminal.direccion = direccion_actual
+
+        terminal.direccion = json.dumps(direccion_actual)
 
     db.session.commit()
 
     return jsonify({"mensaje": "Terminal actualizada exitosamente"}), 200
 
-@jwt_required()
 def eliminar_terminal(id):
     terminal = Terminal.query.get(id)
     if not terminal:
