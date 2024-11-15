@@ -105,3 +105,27 @@ def eliminar_terminal(id):
     db.session.commit()
 
     return jsonify({"mensaje": "Terminal eliminada"}), 200
+def obtener_unidades_de_terminal(id):
+    # Obtener la terminal con el ID proporcionado
+    terminal = Terminal.query.get(id)
+    
+    # Verificar si la terminal existe
+    if not terminal:
+        return jsonify({"mensaje": "Terminal no encontrada"}), 404
+
+    # Obtener las unidades asociadas a la terminal
+    unidades = [{
+        "id": unidad.id,
+        "numPlaca": unidad.numPlaca,
+        "status": unidad.status,
+        "modelo": unidad.modelo,
+        "marca": unidad.marca,
+        "fecha_Compra": unidad.fecha_Compra
+    } for unidad in terminal.unidades]
+
+    # Retornar las unidades en la respuesta JSON
+    return jsonify({
+        "terminal_id": terminal.id,
+        "nombre": terminal.nombre,
+        "unidades": unidades
+    }), 200

@@ -6,9 +6,11 @@ def crear_unidad(data):
         return jsonify({"error": "El número de placa ya existe"}), 400
 
     nueva_unidad = Unidad(
-        modelo=data["modelo"],
         numPlaca=data["numPlaca"],
-        status=data["status"],
+        status=data["status"],      
+        modelo=data["modelo"],
+        marca=data["marca"],
+        fecha_compra=["fecha_compra"],
         terminal_id=data["terminal_id"]
     )
     db.session.add(nueva_unidad)
@@ -16,9 +18,11 @@ def crear_unidad(data):
 
     response_data = {
         "id": nueva_unidad.id,
-        "modelo": nueva_unidad.modelo,
         "numPlaca": nueva_unidad.numPlaca,
         "status": nueva_unidad.status,
+        "modelo": nueva_unidad.modelo,
+        "marca": nueva_unidad.modelo,
+        "fecha_compra": nueva_unidad.modelo,
         "terminal_id": nueva_unidad.terminal_id
     }
 
@@ -29,9 +33,11 @@ def obtener_unidades():
     unidades = Unidad.query.all()  
     return jsonify([{
         "id": unidad.id,
-        "modelo": unidad.modelo,
         "numPlaca": unidad.numPlaca,
         "status": unidad.status,  
+        "modelo": unidad.modelo,
+        "marca": unidad.modelo,
+        "fecha_compra": unidad.modelo,
         "terminal_id": unidad.terminal_id
     } for unidad in unidades]), 200
 
@@ -46,9 +52,11 @@ def obtener_unidad(id):
     
     return jsonify({
         "id": unidad.id,
-        "modelo": unidad.modelo,
         "numPlaca": unidad.numPlaca,
         "status": unidad.status,  
+        "modelo": unidad.modelo,
+        "marca": unidad.modelo,
+        "fecha_compra": unidad.modelo,
         "terminal_id": unidad.terminal_id
     }), 200
 
@@ -57,18 +65,22 @@ def actualizar_unidad(id, data):
     if unidad is None:
         return jsonify({"error": "Unidad no encontrada"}), 404
 
-    unidad.modelo = data.get('modelo', unidad.modelo)
     unidad.numPlaca = data.get('numPlaca', unidad.numPlaca)
     unidad.status = data.get('status', unidad.status)  
+    unidad.modelo = data.get('modelo', unidad.modelo)
+    unidad.marca = data.get('marca', unidad.marca)
+    unidad.fecha_compra = data.get('fecha_compra', unidad.fecha_compra)
     unidad.terminal_id = data.get('terminal_id', unidad.terminal_id)
 
     db.session.commit()  
 
     return jsonify({
         "id": unidad.id,
-        "modelo": unidad.modelo,
         "numPlaca": unidad.numPlaca,
-        "status": unidad.status,
+        "status": unidad.status,  
+        "modelo": unidad.modelo,
+        "marca": unidad.modelo,
+        "fecha_compra": unidad.modelo,
         "terminal_id": unidad.terminal_id
     }), 200
 

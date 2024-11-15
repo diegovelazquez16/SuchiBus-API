@@ -18,7 +18,11 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    CORS(app, resources={r"/*": {"origins": "http://localhost:4200"}})
+    # Configuración de CORS para permitir solicitudes desde el dominio y la IP especificados
+    CORS(app, resources={r"/*": {"origins": [
+        "http://suchibus.integrador.xyz", 
+        "http://3.220.45.200"
+    ]}})
 
     db.init_app(app)
     jwt = JWTManager(app)

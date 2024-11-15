@@ -1,7 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 import os
-from sqlalchemy import Enum
+from sqlalchemy import Enum, Date
 
 load_dotenv()
 
@@ -15,16 +15,20 @@ class Unidad(db.Model):
     __table_args__ = {'schema': schema_name}
 
     id = db.Column(db.Integer, primary_key=True)
-    modelo = db.Column(db.String(100), nullable=False)
     numPlaca = db.Column(db.String(50), unique=True, nullable=False)
-    status = db.Column(Enum("Lleno", "Con cupo", name="status_enum"), nullable=False)
+    status = db.Column(Enum("Lleno", "Con cupo", name="status_enum"), nullable=False) # mantener
+    modelo = db.Column(db.String(20), nullable = False)
+    marca = db.Column(db.String(20), nullable = False)
+    fecha_compra = db.Column(Date)
 
     terminal_id = db.Column(db.Integer, db.ForeignKey(f'{schema_name}.terminales.id'), nullable=False)
 
     terminal = db.relationship('Terminal', backref=db.backref('unidades', lazy=True))
 
-    def __init__(self, modelo, numPlaca, status, terminal_id):
-        self.modelo = modelo
+    def __init__(self, numPlaca, status, modelo, marca, fecha_compra, terminal_id):
         self.numPlaca = numPlaca
         self.status = status
+        self.modelo = modelo
+        self.marca = marca
+        self.fecha_compra =  fecha_compra
         self.terminal_id = terminal_id
