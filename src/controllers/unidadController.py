@@ -1,32 +1,38 @@
-from flask import jsonify, request
+from flask import jsonify, request, send_file
 from src.models.unidades import Unidad, db
+from src.controllers.driveController import upload_to_drive, download_from_drive  
+import tempfile  
+import os  
+import re
+from io import BytesIO
 
-def crear_unidad(data):
-    if db.session.query(Unidad).filter_by(numPlaca=data["numPlaca"]).first() is not None:
-        return jsonify({"error": "El número de placa ya existe"}), 400
+
+
+def crear_unidad(data, file):
+    if not file:
+        return jsonify({"mensaje": "Se requiere un archivo para imagen_url"}), 400
+
+    temp_dir = tempfile.gettempdir()
+    file_path = os.path.join(temp_dir, file.filename)
+    file.save(file_path)
+    file_id = upload_to_drive(file_path, file.filename)
+    google_drive_url = f"https://drive.google.com/uc?id={file_id}"
+    os.remove(file_path)
 
     nueva_unidad = Unidad(
-        numPlaca=data["numPlaca"],
-        status=data["status"],      
-        modelo=data["modelo"],
-        marca=data["marca"],
-        fecha_compra=["fecha_compra"],
-        terminal_id=data["terminal_id"]
+        numPlaca=data.get("numPlaca"),
+        status=data.get("status"),
+        modelo=data.get("modelo"),
+        marca=data.get("marca"),
+        fecha_compra=data.get("fecha_compra"),
+        imagen_url=google_drive_url,  
+        terminal_id=data.get("terminal_id")
     )
+
     db.session.add(nueva_unidad)
     db.session.commit()
 
-    response_data = {
-        "id": nueva_unidad.id,
-        "numPlaca": nueva_unidad.numPlaca,
-        "status": nueva_unidad.status,
-        "modelo": nueva_unidad.modelo,
-        "marca": nueva_unidad.modelo,
-        "fecha_compra": nueva_unidad.modelo,
-        "terminal_id": nueva_unidad.terminal_id
-    }
-
-    return jsonify(response_data), 201
+    return jsonify({"mensaje": "Unidad creada con éxito"}), 201
 
 
 def obtener_unidades():
@@ -42,47 +48,87 @@ def obtener_unidades():
     } for unidad in unidades]), 200
 
 
-from flask import jsonify
 
 def obtener_unidad(id):
-    unidad = Unidad.query.get(id) 
-    if unidad is None:
-        return jsonify({"error": "Unidad no encontrada"}), 404 
+    try:
+        unidad = Unidad.query.get(id)
+        if unidad is None:
+            return jsonify({"error": "Unidad no encontrada"}), 404
 
-    
-    return jsonify({
-        "id": unidad.id,
-        "numPlaca": unidad.numPlaca,
-        "status": unidad.status,  
-        "modelo": unidad.modelo,
-        "marca": unidad.modelo,
-        "fecha_compra": unidad.modelo,
-        "terminal_id": unidad.terminal_id
-    }), 200
+        respuesta = {
+            "id": unidad.id,
+            "numPlaca": unidad.numPlaca,
+            "status": unidad.status,
+            "modelo": unidad.modelo,
+            "marca": unidad.marca,
+            "fecha_compra": unidad.fecha_compra,
+            "terminal_id": unidad.terminal_id,
+        }
 
-def actualizar_unidad(id, data):
+        if unidad.imagen_url:
+            try:
+                match = re.search(r'id=([a-zA-Z0-9_-]+)', unidad.imagen_url)
+                if match:
+                    file_id = match.group(1)
+                    file_data = download_from_drive(file_id)
+                    return send_file(file_data, mimetype="image/jpeg")
+
+                else:
+                    respuesta["imagen_url"] = None
+                    respuesta["warning"] = "Formato de imagen_url inválido"
+            except Exception as e:
+                respuesta["imagen_url"] = None
+                respuesta["error"] = f"No se pudo descargar la imagen: {str(e)}"
+        else:
+            respuesta["imagen_url"] = None  
+
+        return jsonify(respuesta), 200
+
+    except Exception as e:
+        return jsonify({"error": "Error procesando la solicitud", "detalle": str(e)}), 500
+
+
+
+def actualizar_unidad(id, data, file=None):
     unidad = Unidad.query.get(id)
     if unidad is None:
         return jsonify({"error": "Unidad no encontrada"}), 404
 
     unidad.numPlaca = data.get('numPlaca', unidad.numPlaca)
-    unidad.status = data.get('status', unidad.status)  
+    unidad.status = data.get('status', unidad.status)
     unidad.modelo = data.get('modelo', unidad.modelo)
     unidad.marca = data.get('marca', unidad.marca)
     unidad.fecha_compra = data.get('fecha_compra', unidad.fecha_compra)
     unidad.terminal_id = data.get('terminal_id', unidad.terminal_id)
 
-    db.session.commit()  
+    if file:
+        temp_dir = tempfile.gettempdir()  
+        file_path = os.path.join(temp_dir, file.filename)
 
-    return jsonify({
+        file.save(file_path)
+
+        imagen_id = upload_to_drive(file_path)
+
+        os.remove(file_path)
+
+        unidad.imagen_id = imagen_id
+
+    db.session.commit() 
+
+    response = {
         "id": unidad.id,
         "numPlaca": unidad.numPlaca,
-        "status": unidad.status,  
+        "status": unidad.status,
         "modelo": unidad.modelo,
-        "marca": unidad.modelo,
-        "fecha_compra": unidad.modelo,
+        "marca": unidad.marca,
+        "fecha_compra": unidad.fecha_compra,
         "terminal_id": unidad.terminal_id
-    }), 200
+    }
+
+    if unidad.imagen_id:
+        response["imagen_url"] = download_from_drive(unidad.imagen_id)
+
+    return jsonify(response), 200
 
 
 def eliminar_unidad(unidad_id):
@@ -95,3 +141,20 @@ def eliminar_unidad(unidad_id):
     db.session.commit()
 
     return jsonify({"mensaje": "Unidad eliminada"}), 200
+
+
+
+def obtener_unidades_por_terminal(terminal_id):
+    unidades = Unidad.query.filter_by(terminal_id=terminal_id).all()
+    unidades_list = [{
+        "id": unidad.id,
+        "numPlaca": unidad.numPlaca,
+        "status": unidad.status,
+        "modelo": unidad.modelo,
+        "marca": unidad.marca,
+        "fecha_compra": unidad.fecha_compra,
+        "imagen_url": unidad.imagen_url 
+    } for unidad in unidades]
+
+    return jsonify(unidades_list), 200
+

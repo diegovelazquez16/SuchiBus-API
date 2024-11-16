@@ -19,16 +19,17 @@ class Unidad(db.Model):
     status = db.Column(Enum("Lleno", "Con cupo", name="status_enum"), nullable=False) # mantener
     modelo = db.Column(db.String(20), nullable = False)
     marca = db.Column(db.String(20), nullable = False)
-    fecha_compra = db.Column(Date)
-
+    fecha_compra = db.Column(db.String(20), nullable = False)
+    imagen_url = db.Column(db.String(400), nullable = False)
     terminal_id = db.Column(db.Integer, db.ForeignKey(f'{schema_name}.terminales.id'), nullable=False)
 
     terminal = db.relationship('Terminal', backref=db.backref('unidades', lazy=True))
 
-    def __init__(self, numPlaca, status, modelo, marca, fecha_compra, terminal_id):
+    def __init__(self, numPlaca, status, modelo, marca, fecha_compra, imagen_url, terminal_id):
         self.numPlaca = numPlaca
         self.status = status
         self.modelo = modelo
         self.marca = marca
         self.fecha_compra =  fecha_compra
+        self.imagen_url = imagen_url  # Agregar esta línea
         self.terminal_id = terminal_id
