@@ -10,24 +10,38 @@ def crear_usuario(data):
     password = data.get('password')
     tipo_usuario = data.get('tipo_usuario')
 
-    if not nombre or not email or not password:
+    # Validar campos obligatorios
+    if not nombre or not email or not password or not tipo_usuario:
         return jsonify({"mensaje": "Faltan campos obligatorios"}), 400
 
+    # Validar que el tipo de usuario sea uno de los valores permitidos
+    tipos_validos = ["Administrador", "Pasajero", "Chofer"]
+    if tipo_usuario not in tipos_validos:
+        return jsonify({"mensaje": f"Tipo de usuario inválido. Debe ser uno de: {', '.join(tipos_validos)}"}), 400
+
+    # Verificar si el email ya está registrado
     if User.query.filter_by(email=email).first():
         return jsonify({"mensaje": "El email ya está registrado"}), 400
 
-    nuevo_usuario = User(nombre=nombre, email=email, password= password, tipo_usuario=tipo_usuario)
-    nuevo_usuario.set_password(password) 
+    # Crear el usuario
+    nuevo_usuario = User(
+        nombre=nombre,
+        email=email,
+        password=password,
+        tipo_usuario=tipo_usuario
+    )
+    nuevo_usuario.set_password(password)
     db.session.add(nuevo_usuario)
     db.session.commit()
 
     return jsonify({
-        "mensaje": "Usuario creado con bcrypt",
+        "mensaje": "Usuario creado con éxito",
         "id": nuevo_usuario.id,
         "nombre": nuevo_usuario.nombre,
         "email": nuevo_usuario.email,
-        "tipo_usuario": tipo_usuario
+        "tipo_usuario": nuevo_usuario.tipo_usuario
     }), 201
+
 
 
 def crear_usuario_base(data):
@@ -107,9 +121,37 @@ def obtener_todos_usuarios():
 
     return jsonify(usuarios_list), 200
 
+from flask import jsonify
+from src.models.user import User, db
+
+def obtener_usuario_por_id(user_id):
+    """
+    Obtener un usuario por su ID.
+    """
+    try:
+        # Buscar usuario en la base de datos
+        usuario = User.query.get(user_id)
+
+        # Si el usuario no existe, devolver un mensaje de error
+        if not usuario:
+            return jsonify({"mensaje": "Usuario no encontrado"}), 404
+
+        # Devolver los datos del usuario
+        return jsonify({
+            "id": usuario.id,
+            "nombre": usuario.nombre,
+            "email": usuario.email,
+            "tipo_usuario": usuario.tipo_usuario
+        }), 200
+
+    except Exception as e:
+        # Manejar errores inesperados
+        return jsonify({"mensaje": "Error al obtener el usuario", "error": str(e)}), 500
+
+
 @jwt_required()
 def actualizar_usuario():
-    user_id = get_jwt_identity()  
+    user_id = get_jwt_identity()
     user = User.query.get(user_id)
 
     if not user:
@@ -123,10 +165,15 @@ def actualizar_usuario():
     if nombre:
         user.nombre = nombre
     if email:
-        if User.query.filter_by(email=email).first():
+        # Verificar que el email no esté en uso por otro usuario
+        if User.query.filter(User.email == email, User.id != user_id).first():
             return jsonify({"mensaje": "El email ya está registrado"}), 400
         user.email = email
     if tipo_usuario:
+        # Validar que el nuevo tipo de usuario sea permitido
+        tipos_validos = ["Administrador", "Pasajero", "Chofer"]
+        if tipo_usuario not in tipos_validos:
+            return jsonify({"mensaje": f"Tipo de usuario inválido. Debe ser uno de: {', '.join(tipos_validos)}"}), 400
         user.tipo_usuario = tipo_usuario
 
     db.session.commit()

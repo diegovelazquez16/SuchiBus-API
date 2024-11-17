@@ -6,6 +6,7 @@ from src.controllers.userController import (
     login_usuario,
     obtener_todos_usuarios,
     obtener_usuario,
+    obtener_usuario_por_id,
     eliminar_usuario
 )
 from flask_jwt_extended import jwt_required
@@ -41,6 +42,10 @@ def obtener_usuario_ruta():
 @jwt_required()
 def obtener_todos_usuarios_ruta():
     return obtener_todos_usuarios()
+
+@usuario_blueprint.route('/users/<int:user_id>', methods=['GET'])
+def obtener_usuario_por_id_ruta(user_id):
+    return obtener_usuario_por_id(user_id)
 
 # Actualizar datos del usuario autenticado (requiere autenticación)
 @usuario_blueprint.route('/users/profile', methods=['PUT'])

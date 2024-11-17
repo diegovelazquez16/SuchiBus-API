@@ -2,6 +2,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from dotenv import load_dotenv
+from sqlalchemy import Enum
 import os
 
 # Cargar las variables de entorno
@@ -22,7 +23,8 @@ class User(db.Model):
     nombre = db.Column(db.String(50))
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(300), nullable=False)
-    tipo_usuario = db.Column(db.String(50))  
+    tipo_usuario = db.Column(Enum("Administrador", "Pasajero", "Chofer", name="role_enum"), nullable=False) # mantener
+
     
     def __init__(self, nombre, email, password, tipo_usuario):
         self.nombre = nombre

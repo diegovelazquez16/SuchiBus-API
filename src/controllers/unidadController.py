@@ -87,6 +87,27 @@ def obtener_unidad(id):
     except Exception as e:
         return jsonify({"error": "Error procesando la solicitud", "detalle": str(e)}), 500
 
+def obtener_informacion_unidad(id):
+    try:
+        unidad = Unidad.query.get(id)
+        if unidad is None:
+            return jsonify({"error": "Unidad no encontrada"}), 404
+
+        respuesta = {
+            "id": unidad.id,
+            "numPlaca": unidad.numPlaca,
+            "status": unidad.status,
+            "modelo": unidad.modelo,
+            "marca": unidad.marca,
+            "fecha_compra": unidad.fecha_compra,
+            "terminal_id": unidad.terminal_id,
+            "imagen_url": unidad.imagen_url
+        }
+
+        return jsonify(respuesta), 200
+
+    except Exception as e:
+        return jsonify({"error": "Error al obtener la información de la unidad", "detalle": str(e)}), 500
 
 
 def actualizar_unidad(id, data, file=None):
@@ -159,4 +180,3 @@ def obtener_unidades_por_terminal(terminal_id):
     } for unidad in unidades]
 
     return jsonify(unidades_list), 200
-
