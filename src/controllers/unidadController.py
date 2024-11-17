@@ -90,46 +90,48 @@ def obtener_unidad(id):
 
 
 def actualizar_unidad(id, data, file=None):
-    unidad = Unidad.query.get(id)
-    if unidad is None:
-        return jsonify({"error": "Unidad no encontrada"}), 404
+    try:
+        unidad = Unidad.query.get(id)
+        if unidad is None:
+            return jsonify({"error": "Unidad no encontrada"}), 404
 
-    unidad.numPlaca = data.get('numPlaca', unidad.numPlaca)
-    unidad.status = data.get('status', unidad.status)
-    unidad.modelo = data.get('modelo', unidad.modelo)
-    unidad.marca = data.get('marca', unidad.marca)
-    unidad.fecha_compra = data.get('fecha_compra', unidad.fecha_compra)
-    unidad.terminal_id = data.get('terminal_id', unidad.terminal_id)
+        if data:
+            unidad.numPlaca = data.get('numPlaca', unidad.numPlaca)
+            unidad.status = data.get('status', unidad.status)
+            unidad.modelo = data.get('modelo', unidad.modelo)
+            unidad.marca = data.get('marca', unidad.marca)
+            unidad.fecha_compra = data.get('fecha_compra', unidad.fecha_compra)
+            unidad.terminal_id = data.get('terminal_id', unidad.terminal_id)
 
-    if file:
-        temp_dir = tempfile.gettempdir()  
-        file_path = os.path.join(temp_dir, file.filename)
+        if file:
+            temp_dir = tempfile.gettempdir()
+            file_path = os.path.join(temp_dir, file.filename)
 
-        file.save(file_path)
+            file.save(file_path)
+            imagen_id = upload_to_drive(file_path, file.filename)  
+            os.remove(file_path)  
 
-        imagen_id = upload_to_drive(file_path)
+            unidad.imagen_url = f"https://drive.google.com/uc?id={imagen_id}"
 
-        os.remove(file_path)
+        db.session.commit()
 
-        unidad.imagen_id = imagen_id
+        response = {
+            "id": unidad.id,
+            "numPlaca": unidad.numPlaca,
+            "status": unidad.status,
+            "modelo": unidad.modelo,
+            "marca": unidad.marca,
+            "fecha_compra": unidad.fecha_compra,
+            "terminal_id": unidad.terminal_id
+        }
 
-    db.session.commit() 
+        if unidad.imagen_url:
+            response["imagen_url"] = unidad.imagen_url
 
-    response = {
-        "id": unidad.id,
-        "numPlaca": unidad.numPlaca,
-        "status": unidad.status,
-        "modelo": unidad.modelo,
-        "marca": unidad.marca,
-        "fecha_compra": unidad.fecha_compra,
-        "terminal_id": unidad.terminal_id
-    }
+        return jsonify(response), 200
 
-    if unidad.imagen_id:
-        response["imagen_url"] = download_from_drive(unidad.imagen_id)
-
-    return jsonify(response), 200
-
+    except Exception as e:
+        return jsonify({"error": "Error al actualizar la unidad", "detalle": str(e)}), 500
 
 def eliminar_unidad(unidad_id):
     unidad = Unidad.query.get(unidad_id)

@@ -27,8 +27,9 @@ def ruta_obtener_todas_unidades():
 
 @unidad_blueprint.route('/unidades/<int:id>', methods=['PUT'])
 def ruta_actualizar_unidad(id):
-    data = request.get_json()
-    return actualizar_unidad(id, data)
+    data = request.form.to_dict()
+    file = request.files.get('file')
+    return actualizar_unidad(id, data, file)
 
 @unidad_blueprint.route('/unidades/<int:id>', methods=['DELETE'])
 def ruta_eliminar_unidad(id):
