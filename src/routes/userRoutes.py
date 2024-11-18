@@ -7,7 +7,8 @@ from src.controllers.userController import (
     obtener_todos_usuarios,
     obtener_usuario,
     obtener_usuario_por_id,
-    eliminar_usuario
+    eliminar_usuario, 
+    obtener_imagen_usuario
 )
 from flask_jwt_extended import jwt_required
 
@@ -16,8 +17,10 @@ usuario_blueprint = Blueprint('usuarios', __name__)
 # Crear un usuario con bcrypt
 @usuario_blueprint.route('/users', methods=['POST'])
 def crear_usuario_ruta():
-    data = request.get_json()
-    return crear_usuario(data)
+    data = request.form.to_dict()  
+    file = request.files.get('file')  
+
+    return crear_usuario(data, file)
 
 # Crear usuario sin bcrypt
 @usuario_blueprint.route('/users_base', methods=['POST'])
@@ -47,10 +50,10 @@ def obtener_todos_usuarios_ruta():
 def obtener_usuario_por_id_ruta(user_id):
     return obtener_usuario_por_id(user_id)
 
-# Actualizar datos del usuario autenticado (requiere autenticación)
 @usuario_blueprint.route('/users/profile', methods=['PUT'])
 @jwt_required()
 def actualizar_usuario_ruta():
+    # Llamamos al método actualizar_usuario, el cual maneja la lógica de la actualización
     return actualizar_usuario()
 
 # Eliminar un usuario por su ID (requiere autenticación)
@@ -58,3 +61,9 @@ def actualizar_usuario_ruta():
 @jwt_required()
 def eliminar_usuario_ruta(user_id):
     return eliminar_usuario(user_id)
+
+@usuario_blueprint.route('/users/<int:id>/image', methods=['GET'])
+@jwt_required()
+def obtener_imagen_usuario_ruta(id):
+    return obtener_imagen_usuario(id)
+

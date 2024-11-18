@@ -24,13 +24,16 @@ class User(db.Model):
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(300), nullable=False)
     tipo_usuario = db.Column(Enum("Administrador", "Pasajero", "Chofer", name="role_enum"), nullable=False) # mantener
+    imagen_url = db.Column(db.String(400), nullable=True)  # Nueva columna para la imagen del usuario
 
     
-    def __init__(self, nombre, email, password, tipo_usuario):
+    def __init__(self, nombre, email, password, tipo_usuario, imagen_url):
         self.nombre = nombre
         self.email = email
         self.set_password(password)  
         self.tipo_usuario = tipo_usuario
+        self.imagen_url = imagen_url  # Asignar la URL de la imagen (si existe)
+
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
