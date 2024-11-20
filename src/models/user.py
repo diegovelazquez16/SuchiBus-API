@@ -23,17 +23,15 @@ class User(db.Model):
     nombre = db.Column(db.String(50))
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(300), nullable=False)
-    tipo_usuario = db.Column(Enum("Administrador", "Pasajero", "Chofer", name="role_enum"), nullable=False) # mantener
-    imagen_url = db.Column(db.String(400), nullable=True)  # Nueva columna para la imagen del usuario
-
+    tipo_usuario = db.Column(Enum("Administrador", "Pasajero", "Chofer", name="role_enum"), nullable=False)  # mantener
+    imagen_url = db.Column(db.String(400), nullable=True)
     
     def __init__(self, nombre, email, password, tipo_usuario, imagen_url):
         self.nombre = nombre
         self.email = email
         self.set_password(password)  
         self.tipo_usuario = tipo_usuario
-        self.imagen_url = imagen_url  # Asignar la URL de la imagen (si existe)
-
+        self.imagen_url = imagen_url 
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
@@ -41,17 +39,20 @@ class User(db.Model):
     def check_password(self, password):
         return check_password_hash(self.password, password)
 
-
 class Pasajero(User):
     __tablename__ = 'pasajeros'
     __table_args__ = {'schema': schema_name}
     
     id = db.Column(db.Integer, db.ForeignKey(f'{schema_name}.users.id'), primary_key=True)
-    edad = db.Column(db.Integer, nullable=True)
+    edad = db.Column(db.Integer, nullable=True) 
 
     __mapper_args__ = {
         'polymorphic_identity': 'pasajero',
     }
+
+    def __init__(self, nombre, email, password, tipo_usuario, imagen_url, edad):
+        super().__init__(nombre, email, password, tipo_usuario, imagen_url)
+        self.edad = edad  
 
 class Chofer(User):
     __tablename__ = 'choferes'
@@ -64,6 +65,10 @@ class Chofer(User):
         'polymorphic_identity': 'chofer',
     }
 
+    def __init__(self, nombre, email, password, tipo_usuario, imagen_url, licencia):
+        super().__init__(nombre, email, password, tipo_usuario, imagen_url)
+        self.licencia = licencia 
+
 class Administrador(User):
     __tablename__ = 'administradores'
     __table_args__ = {'schema': schema_name}
@@ -73,3 +78,6 @@ class Administrador(User):
     __mapper_args__ = {
         'polymorphic_identity': 'administrador',
     }
+
+    def __init__(self, nombre, email, password, tipo_usuario, imagen_url):
+        super().__init__(nombre, email, password, tipo_usuario, imagen_url)

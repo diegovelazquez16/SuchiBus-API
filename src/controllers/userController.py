@@ -1,12 +1,11 @@
 from flask import jsonify, request, send_file
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
-from src.models.user import User, db
+from src.models.user import User, Pasajero, Chofer, Administrador, db
 from werkzeug.security import generate_password_hash, check_password_hash
 from src.controllers.driveController import upload_to_drive, download_from_drive
 import tempfile
 import os
 import re
-from io import BytesIO
 
 def crear_usuario(data, file):
     if not file:
@@ -25,15 +24,47 @@ def crear_usuario(data, file):
 
     os.remove(file_path)
 
-    nuevo_usuario = User(
-        nombre=data.get("nombre"),
-        email=data.get("email"),
-        password=data.get("password"),  
-        tipo_usuario=data.get("tipo_usuario"),
-        imagen_url=google_drive_url,
-    )
-    
-    nuevo_usuario.imagen_url = google_drive_url
+    tipo_usuario = data.get("tipo_usuario")
+    nombre = data.get("nombre")
+    email = data.get("email")
+    password = data.get("password")
+
+    if not nombre or not email or not password or not tipo_usuario:
+        return jsonify({"mensaje": "Faltan campos obligatorios"}), 400
+
+    if User.query.filter_by(email=email).first():
+        return jsonify({"mensaje": "El email ya está registrado"}), 400
+
+    if tipo_usuario == "Pasajero":
+        edad = data.get("edad")
+        nuevo_usuario = Pasajero(
+            nombre=nombre,
+            email=email,
+            password=password,
+            tipo_usuario=tipo_usuario,
+            imagen_url=google_drive_url,
+            edad=edad
+        )
+    elif tipo_usuario == "Chofer":
+        licencia = data.get("licencia")
+        nuevo_usuario = Chofer(
+            nombre=nombre,
+            email=email,
+            password=password,
+            tipo_usuario=tipo_usuario,
+            imagen_url=google_drive_url,
+            licencia=licencia
+        )
+    elif tipo_usuario == "Administrador":
+        nuevo_usuario = Administrador(
+            nombre=nombre,
+            email=email,
+            password=password,
+            tipo_usuario=tipo_usuario,
+            imagen_url=google_drive_url
+        )
+    else:
+        return jsonify({"mensaje": "Tipo de usuario inválido"}), 400
 
     db.session.add(nuevo_usuario)
     db.session.commit()
@@ -47,6 +78,7 @@ def crear_usuario(data, file):
         "imagen_url": nuevo_usuario.imagen_url
     }), 201
 
+
 def crear_usuario_base(data):
     nombre = data.get('nombre')
     email = data.get('email')
@@ -58,15 +90,23 @@ def crear_usuario_base(data):
     if User.query.filter_by(email=email).first():
         return jsonify({"mensaje": "El email ya está registrado"}), 400
 
-    nuevo_usuario = User(nombre=nombre, email=email, password=password, encrypt_password=False)
+    nuevo_usuario = User(
+        nombre=nombre, 
+        email=email, 
+        password=password, 
+        tipo_usuario="Pasajero",  
+        imagen_url=None  
+    )
+    
     db.session.add(nuevo_usuario)
     db.session.commit()
 
     return jsonify({
-        "mensaje": "Usuario creado sin bcrypt",
+        "mensaje": "Usuario creado correctamente",
         "id": nuevo_usuario.id,
         "nombre": nuevo_usuario.nombre,
-        "email": nuevo_usuario.email
+        "email": nuevo_usuario.email,
+        "tipo_usuario": nuevo_usuario.tipo_usuario
     }), 201
 
 def login_usuario(data):

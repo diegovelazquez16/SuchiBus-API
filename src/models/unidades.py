@@ -31,5 +31,5 @@ class Unidad(db.Model):
         self.modelo = modelo
         self.marca = marca
         self.fecha_compra =  fecha_compra
-        self.imagen_url = imagen_url  # Agregar esta línea
+        self.imagen_url = imagen_url  # me faltaba esto xd
         self.terminal_id = terminal_id
