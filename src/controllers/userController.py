@@ -30,8 +30,8 @@ def crear_usuario(data, file):
         email=data.get("email"),
         password=data.get("password"),  
         tipo_usuario=data.get("tipo_usuario"),
-        imagen_url=google_drive_url,
     )
+
     
     nuevo_usuario.imagen_url = google_drive_url
 
@@ -48,6 +48,9 @@ def crear_usuario(data, file):
     }), 201
 
 def crear_usuario_base(data):
+    
+    from src.models.user import Pasajero
+    
     nombre = data.get('nombre')
     email = data.get('email')
     password = data.get('password')
@@ -58,16 +61,61 @@ def crear_usuario_base(data):
     if User.query.filter_by(email=email).first():
         return jsonify({"mensaje": "El email ya está registrado"}), 400
 
-    nuevo_usuario = User(nombre=nombre, email=email, password=password, encrypt_password=False)
+    nuevo_usuario = User(
+        nombre=nombre, 
+        email=email, 
+        password=password, 
+        tipo_usuario="Pasajero"
+    )
+    
     db.session.add(nuevo_usuario)
     db.session.commit()
 
+    pasajero = Pasajero(id=nuevo_usuario.id)
+    db.session.add(pasajero)
+    db.session.commit()
+
     return jsonify({
-        "mensaje": "Usuario creado sin bcrypt",
+        "mensaje": "Usuario creado correctamente",
         "id": nuevo_usuario.id,
         "nombre": nuevo_usuario.nombre,
-        "email": nuevo_usuario.email
+        "email": nuevo_usuario.email,
+        "tipo_usuario": nuevo_usuario.tipo_usuario
     }), 201
+
+    
+#@jwt_required()
+def actualizar_usuario_base(id_usuario, data):
+    usuario = User.query.get(id_usuario)
+
+    if not usuario:
+        return jsonify({"mensaje": "Usuario no encontrado"}), 404
+
+    nombre = data.get('nombre')
+    email = data.get('email')
+    password = data.get('password')
+
+    if not any([nombre, email, password]):
+        return jsonify({"mensaje": "No se proporcionaron datos para actualizar"}), 400
+
+    if nombre:
+        usuario.nombre = nombre
+    if email:
+        if User.query.filter_by(email=email).first() and email != usuario.email:
+            return jsonify({"mensaje": "El email ya está registrado"}), 400
+        usuario.email = email
+    if password:
+        usuario.password = password
+
+    db.session.commit()
+
+    return jsonify({
+        "mensaje": "Usuario actualizado correctamente",
+        "id": usuario.id,
+        "nombre": usuario.nombre,
+        "email": usuario.email
+    }), 200
+
 
 def login_usuario(data):
     email = data.get('email')
@@ -93,8 +141,22 @@ def login_usuario(data):
         "token": access_token
     }), 200
 
-
 @jwt_required()
+def obtener_usuario_actual():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+
+    if not user:
+        return jsonify({"mensaje": "Usuario no encontrado"}), 404
+
+    return jsonify({
+        "id": user.id,
+        "nombre": user.nombre,
+        "email": user.email
+    }), 200
+
+
+#@jwt_required()
 def obtener_usuario():
     user_id = get_jwt_identity()
 
@@ -109,7 +171,7 @@ def obtener_usuario():
         "email": user.email
     }), 200
 
-@jwt_required()
+#@jwt_required()
 def obtener_todos_usuarios():
     usuarios = User.query.all()
 
@@ -147,7 +209,7 @@ def obtener_usuario_por_id(user_id):
         return jsonify({"mensaje": "Error al obtener el usuario", "error": str(e)}), 500
 
 
-@jwt_required()
+#@jwt_required()
 def actualizar_usuario():
     user_id = get_jwt_identity() 
     user = User.query.get(user_id)
@@ -195,7 +257,7 @@ def actualizar_usuario():
         "imagen_url": user.imagen_url
     }), 200
 
-@jwt_required()
+#@jwt_required()
 def eliminar_usuario(user_id):
     user = User.query.get(user_id)
 
@@ -206,7 +268,7 @@ def eliminar_usuario(user_id):
     db.session.commit()
 
     return jsonify({"mensaje": "Usuario eliminado"}), 200
-@jwt_required()
+#@jwt_required()
 def obtener_imagen_usuario(id):
     try:
         usuario = User.query.get(id)

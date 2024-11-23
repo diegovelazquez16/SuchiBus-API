@@ -25,7 +25,7 @@ def crear_unidad(data, file):
         modelo=data.get("modelo"),
         marca=data.get("marca"),
         fecha_compra=data.get("fecha_compra"),
-        imagen_url=google_drive_url,  
+        imagen_url=google_drive_url,
         terminal_id=data.get("terminal_id")
     )
 
