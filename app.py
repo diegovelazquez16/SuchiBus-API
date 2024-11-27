@@ -4,11 +4,12 @@ from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
-from config import config
 from src.routes.userRoutes import usuario_blueprint
 from src.routes.terminalRoutes import terminal_blueprint
 from src.routes.unidadRoutes import unidad_blueprint
+from src.routes.drive_Routes import drive_bp
 from src.models.user import db
+from config import config
 
 load_dotenv()
 
@@ -20,6 +21,12 @@ def create_app():
 
     # Configuración de CORS para permitir solicitudes desde el dominio y la IP especificados
     CORS(app, resources={r"/*": {"origins": "http://localhost:4200"}})
+    
+    cors_options = {
+        "origins": "*",
+        "methods": ["GET", "POST", "PUT", "DELETE"],   
+        "allowed_headers": ["Content-Type", "Authorization"]
+        }
 
 
     db.init_app(app)
@@ -31,6 +38,7 @@ def create_app():
     app.register_blueprint(usuario_blueprint)
     app.register_blueprint(terminal_blueprint)
     app.register_blueprint(unidad_blueprint)
+    app.register_blueprint(drive_bp)
 
     return app
 

@@ -4,16 +4,16 @@ from flask_bcrypt import Bcrypt
 from dotenv import load_dotenv
 from sqlalchemy import Enum
 import os
+import json
+from sqlalchemy.dialects.postgresql import JSONB
 
-# Cargar las variables de entorno
+
 load_dotenv()
 
-# Inicializar SQLAlchemy y Bcrypt
 db = SQLAlchemy()
 bcrypt = Bcrypt()
 
-# Obtener el nombre del esquema desde las variables de entorno
-schema_name = os.getenv('SCHEMA_NAME', 'public')  # 'public' como valor por defecto
+schema_name = os.getenv('SCHEMA_NAME', 'public')
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -23,15 +23,13 @@ class User(db.Model):
     nombre = db.Column(db.String(50))
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(300), nullable=False)
-    tipo_usuario = db.Column(Enum("Administrador", "Pasajero", "Chofer", name="role_enum"), nullable=False)  # mantener
-    imagen_url = db.Column(db.String(400), nullable=True)
-    
-    def __init__(self, nombre, email, password, tipo_usuario, imagen_url):
+    tipo_usuario = db.Column(Enum("Administrador", "Pasajero", "Chofer", name="role_enum"), nullable=False)
+
+    def _init_(self, nombre, email, password, tipo_usuario):
         self.nombre = nombre
         self.email = email
-        self.set_password(password)  
+        self.set_password(password)
         self.tipo_usuario = tipo_usuario
-        self.imagen_url = imagen_url 
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
@@ -39,45 +37,62 @@ class User(db.Model):
     def check_password(self, password):
         return check_password_hash(self.password, password)
 
-class Pasajero(User):
-    __tablename__ = 'pasajeros'
-    __table_args__ = {'schema': schema_name}
+
+class Pasajero(db.Model):
+    _tablename_ = 'pasajeros'
+    _table_args_ = {'schema': schema_name}
     
     id = db.Column(db.Integer, db.ForeignKey(f'{schema_name}.users.id'), primary_key=True)
-    edad = db.Column(db.Integer, nullable=True) 
+    edad = db.Column(db.Integer, nullable=True)
 
-    __mapper_args__ = {
+    user = db.relationship("User", backref="pasajero", uselist=False)
+
+    _mapper_args_ = {
         'polymorphic_identity': 'pasajero',
     }
 
-    def __init__(self, nombre, email, password, tipo_usuario, imagen_url, edad):
-        super().__init__(nombre, email, password, tipo_usuario, imagen_url)
-        self.edad = edad  
 
-class Chofer(User):
-    __tablename__ = 'choferes'
-    __table_args__ = {'schema': schema_name}
-    
+class Chofer(db.Model):
+    _tablename_ = 'choferes'
+    _table_args_ = {'schema': schema_name}
+
     id = db.Column(db.Integer, db.ForeignKey(f'{schema_name}.users.id'), primary_key=True)
-    licencia = db.Column(db.String(100), nullable=True)
+    username = db.Column(db.String(50))
+    lastname = db.Column(db.String(50))
+    licencia = db.Column(db.String(100))
+    imagen_url = db.Column(db.String(400), nullable=True)
+    direccion = db.Column(JSONB, nullable=True)
+    edad = db.Column(db.Integer)
+    experienciaLaboral = db.Column(db.String(50))
+    telefono = db.Column(db.Integer)
+    status = db.Column(db.String(100))
 
-    __mapper_args__ = {
+    user = db.relationship("User", backref="chofer", uselist=False)  # Asegúrate de que uselist=False esté presente
+
+    _mapper_args_ = {
         'polymorphic_identity': 'chofer',
     }
 
-    def __init__(self, nombre, email, password, tipo_usuario, imagen_url, licencia):
-        super().__init__(nombre, email, password, tipo_usuario, imagen_url)
-        self.licencia = licencia 
 
-class Administrador(User):
-    __tablename__ = 'administradores'
-    __table_args__ = {'schema': schema_name}
+
+class Administrador(db.Model):
+    _tablename_ = 'administradores'
+    _table_args_ = {'schema': schema_name}
     
     id = db.Column(db.Integer, db.ForeignKey(f'{schema_name}.users.id'), primary_key=True)
+    username = db.Column(db.String(50))
+    lastname = db.Column(db.String(50))
+    imagen_url = db.Column(db.String(400), nullable=True,)
+    direccion = db.Column(JSONB,)
+    edad = db.Column(db.Integer)
+    telefono= db.Column(db.Integer)
+    status= db.Column(db.String(100))
+    experienciaLaboral = db.Column(db.String(50))
 
-    __mapper_args__ = {
+
+
+    user = db.relationship("User", backref="administrador", uselist=False)
+
+    _mapper_args_ = {
         'polymorphic_identity': 'administrador',
     }
-
-    def __init__(self, nombre, email, password, tipo_usuario, imagen_url):
-        super().__init__(nombre, email, password, tipo_usuario, imagen_url)

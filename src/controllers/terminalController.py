@@ -12,8 +12,9 @@ def crear_terminal(data):
     horarioApertura = data.get('horarioApertura')
     horarioCierre = data.get('horarioCierre')
     telefono = data.get('telefono')
+    ruta_id = data.get('ruta_id')
 
-    if not all([nombre, ciudad, colonia, calle, num, horarioApertura, horarioCierre, telefono]):
+    if not all([nombre, ciudad, colonia, calle, num, horarioApertura, horarioCierre, telefono, ruta_id]):
         return jsonify({"mensaje": "Faltan campos obligatorios"}), 400
 
     direccion = {
@@ -28,7 +29,8 @@ def crear_terminal(data):
         direccion=direccion,
         horarioApertura=horarioApertura,
         horarioCierre=horarioCierre,
-        telefono=telefono
+        telefono=telefono,
+        ruta_id = ruta_id
     )
 
     db.session.add(nueva_terminal)
@@ -53,7 +55,8 @@ def obtener_terminal(id):
         "direccion": direccion,
         "horarioApertura": terminal.horarioApertura,
         "horarioCierre": terminal.horarioCierre,
-        "telefono": terminal.telefono
+        "telefono": terminal.telefono,
+        "ruta_id" : terminal.ruta_id
     }), 200
 
 
@@ -65,7 +68,8 @@ def obtener_todas_terminales():
         "direccion": terminal.direccion,  
         "horarioApertura": terminal.horarioApertura,
         "horarioCierre": terminal.horarioCierre,
-        "telefono": terminal.telefono
+        "telefono": terminal.telefono,
+        "ruta_id": terminal.ruta_id
     } for terminal in terminales]
 
     return jsonify(terminales_list), 200

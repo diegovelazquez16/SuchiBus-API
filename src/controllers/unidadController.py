@@ -1,60 +1,98 @@
-from flask import jsonify, request, send_file
+from flask import jsonify, request, send_file, json
 from src.models.unidades import Unidad, db
 from src.controllers.driveController import upload_to_drive, download_from_drive  
 import tempfile  
 import os  
 import re
 from io import BytesIO
-
-
+from flask import send_file
 
 def crear_unidad(data, file):
+    if 'file' not in request.files:
+        return jsonify({"mensaje": "Se requiere un archivo para imagen_url"}), 400
+    
+    file = request.files['file']
     if not file:
         return jsonify({"mensaje": "Se requiere un archivo para imagen_url"}), 400
-
+    print("Archivo recibido:", file)
+    
+    # Se cargan los datos de la unidad
+    data = json.loads(request.form['data'])
+    
+    # Guardar temporalmente el archivo
     temp_dir = tempfile.gettempdir()
     file_path = os.path.join(temp_dir, file.filename)
-    file.save(file_path)
-    file_id = upload_to_drive(file_path, file.filename)
-    google_drive_url = f"https://drive.google.com/uc?id={file_id}"
-    os.remove(file_path)
-
-    nueva_unidad = Unidad(
-        numPlaca=data.get("numPlaca"),
-        status=data.get("status"),
-        modelo=data.get("modelo"),
-        marca=data.get("marca"),
-        fecha_compra=data.get("fecha_compra"),
-        imagen_url=google_drive_url,  
-        terminal_id=data.get("terminal_id")
-    )
-
-    db.session.add(nueva_unidad)
-    db.session.commit()
-
+    
+    try:
+        file.save(file_path)
+        print(f"Archivo guardado temporalmente en: {file_path}")
+    except Exception as e:
+        print(f"Error al guardar el archivo: {e}")
+        return jsonify({"mensaje": "Error al guardar el archivo"}), 500
+    
+    # Subir el archivo a Google Drive
+    try:
+        file_id = upload_to_drive(file_path, file.filename)
+        # Solo guardamos el file_id, no la URL completa
+    except Exception as e:
+        print(f"Error al subir el archivo a Google Drive: {e}")
+        return jsonify({"mensaje": "Error al subir el archivo a Google Drive"}), 500
+    
+    # Crear la nueva unidad en la base de datos
+    try:
+        nueva_unidad = Unidad(
+            numPlaca=data.get("numPlaca"),
+            status=data.get("status"),
+            modelo=data.get("modelo"),
+            marca=data.get("marca"),
+            fecha_compra=data.get("fecha_compra"),
+            imagen_url=file_id,  # Guardamos solo el file_id
+            terminal_id=data.get("terminal_id"),
+            imagen_archivo=file.filename  # Guardamos el nombre del archivo
+        )
+        
+        db.session.add(nueva_unidad)
+        db.session.commit()
+        print("Unidad creada con éxito:", nueva_unidad, file_id)
+    except Exception as e:
+        print(f"Error al crear la unidad: {e}")
+        return jsonify({"mensaje": "Error al crear la unidad"}), 500
+    
     return jsonify({"mensaje": "Unidad creada con éxito"}), 201
 
 
 def obtener_unidades():
-    unidades = Unidad.query.all()  
-    return jsonify([{
-        "id": unidad.id,
-        "numPlaca": unidad.numPlaca,
-        "status": unidad.status,  
-        "modelo": unidad.modelo,
-        "marca": unidad.modelo,
-        "fecha_compra": unidad.modelo,
-        "terminal_id": unidad.terminal_id
-    } for unidad in unidades]), 200
+    try:
+        unidades = Unidad.query.all() 
+        unidades_respuesta = []
 
+        for unidad in unidades:
+            respuesta = {
+                "id": unidad.id,
+                "numPlaca": unidad.numPlaca,
+                "status": unidad.status,
+                "modelo": unidad.modelo,
+                "marca": unidad.marca,
+                "fecha_compra": unidad.fecha_compra,
+                "terminal_id": unidad.terminal_id,
+                "imagen_archivo": unidad.imagen_archivo,
+                "imagen_url": unidad.imagen_url,
+                
+            }
+        return jsonify(unidades_respuesta), 200
+
+    except Exception as e:
+        return jsonify({"error": "Error procesando la solicitud", "detalle": str(e)}), 500
 
 
 def obtener_unidad(id):
     try:
+        # Obtén la unidad de la base de datos
         unidad = Unidad.query.get(id)
         if unidad is None:
             return jsonify({"error": "Unidad no encontrada"}), 404
 
+        # Construye la respuesta básica
         respuesta = {
             "id": unidad.id,
             "numPlaca": unidad.numPlaca,
@@ -63,24 +101,9 @@ def obtener_unidad(id):
             "marca": unidad.marca,
             "fecha_compra": unidad.fecha_compra,
             "terminal_id": unidad.terminal_id,
+            "imagen_url": unidad.imagen_url,
+            "imagen_archivo": unidad.imagen_archivo,
         }
-
-        if unidad.imagen_url:
-            try:
-                match = re.search(r'id=([a-zA-Z0-9_-]+)', unidad.imagen_url)
-                if match:
-                    file_id = match.group(1)
-                    file_data = download_from_drive(file_id)
-                    return send_file(file_data, mimetype="image/jpeg")
-
-                else:
-                    respuesta["imagen_url"] = None
-                    respuesta["warning"] = "Formato de imagen_url inválido"
-            except Exception as e:
-                respuesta["imagen_url"] = None
-                respuesta["error"] = f"No se pudo descargar la imagen: {str(e)}"
-        else:
-            respuesta["imagen_url"] = None  
 
         return jsonify(respuesta), 200
 
@@ -101,10 +124,9 @@ def obtener_informacion_unidad(id):
             "marca": unidad.marca,
             "fecha_compra": unidad.fecha_compra,
             "terminal_id": unidad.terminal_id,
-            "imagen_url": unidad.imagen_url
+            "imagen_url": unidad.imagen_url,
+            "imagen_archivo": unidad.imagen_archivo
         }
-
-        return jsonify(respuesta), 200
 
     except Exception as e:
         return jsonify({"error": "Error al obtener la información de la unidad", "detalle": str(e)}), 500
@@ -165,18 +187,29 @@ def eliminar_unidad(unidad_id):
 
     return jsonify({"mensaje": "Unidad eliminada"}), 200
 
-
-
 def obtener_unidades_por_terminal(terminal_id):
-    unidades = Unidad.query.filter_by(terminal_id=terminal_id).all()
-    unidades_list = [{
-        "id": unidad.id,
-        "numPlaca": unidad.numPlaca,
-        "status": unidad.status,
-        "modelo": unidad.modelo,
-        "marca": unidad.marca,
-        "fecha_compra": unidad.fecha_compra,
-        "imagen_url": unidad.imagen_url 
-    } for unidad in unidades]
+    try:
+        # Obtener las unidades del terminal
+        unidades = Unidad.query.filter_by(terminal_id=terminal_id).all()
 
-    return jsonify(unidades_list), 200
+        if not unidades:
+            return jsonify({"error": "No se encontraron unidades para el terminal especificado"}), 404
+
+        unidades_list = []
+        for unidad in unidades:
+            respuesta = {
+                "id": unidad.id,
+                "numPlaca": unidad.numPlaca,
+                "status": unidad.status,
+                "modelo": unidad.modelo,
+                "marca": unidad.marca,
+                "fecha_compra": unidad.fecha_compra,
+                "imagen_url": unidad.imagen_url,  # Aquí dejas la URL o la referencia
+                "imagen_archivo": unidad.imagen_archivo  # Este es el nombre o referencia del archivo
+            }
+            unidades_list.append(respuesta)
+
+        return jsonify(unidades_list), 200
+
+    except Exception as e:
+        return jsonify({"error": "Error al obtener las unidades", "detalle": str(e)}), 500
