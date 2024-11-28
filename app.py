@@ -10,12 +10,14 @@ from src.routes.unidadRoutes import unidad_blueprint
 from src.routes.drive_Routes import drive_bp
 from src.models.user import db
 from config import config
+from datetime import timedelta
 
 load_dotenv()
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(config['development'])
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(seconds=int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES", 3600)))
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 

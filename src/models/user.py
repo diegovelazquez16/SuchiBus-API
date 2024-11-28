@@ -25,7 +25,7 @@ class User(db.Model):
     password = db.Column(db.String(300), nullable=False)
     tipo_usuario = db.Column(Enum("Administrador", "Pasajero", "Chofer", name="role_enum"), nullable=False)
 
-    def _init_(self, nombre, email, password, tipo_usuario):
+    def __init__(self, nombre, email, password, tipo_usuario):
         self.nombre = nombre
         self.email = email
         self.set_password(password)
@@ -39,22 +39,22 @@ class User(db.Model):
 
 
 class Pasajero(db.Model):
-    _tablename_ = 'pasajeros'
-    _table_args_ = {'schema': schema_name}
+    __tablename__ = 'pasajeros'
+    __table_args__ = {'schema': schema_name}
     
     id = db.Column(db.Integer, db.ForeignKey(f'{schema_name}.users.id'), primary_key=True)
     edad = db.Column(db.Integer, nullable=True)
 
     user = db.relationship("User", backref="pasajero", uselist=False)
 
-    _mapper_args_ = {
+    __mapper_args__ = {
         'polymorphic_identity': 'pasajero',
     }
 
 
 class Chofer(db.Model):
-    _tablename_ = 'choferes'
-    _table_args_ = {'schema': schema_name}
+    __tablename__ = 'choferes'
+    __table_args__ = {'schema': schema_name}
 
     id = db.Column(db.Integer, db.ForeignKey(f'{schema_name}.users.id'), primary_key=True)
     username = db.Column(db.String(50))
@@ -64,20 +64,20 @@ class Chofer(db.Model):
     direccion = db.Column(JSONB, nullable=True)
     edad = db.Column(db.Integer)
     experienciaLaboral = db.Column(db.String(50))
-    telefono = db.Column(db.Integer)
+    telefono = db.Column(db.String(10))
     status = db.Column(db.String(100))
 
-    user = db.relationship("User", backref="chofer", uselist=False)  # Asegúrate de que uselist=False esté presente
+    user = db.relationship("User", backref="chofer", uselist=False)
 
-    _mapper_args_ = {
+    __mapper_args__ = {
         'polymorphic_identity': 'chofer',
     }
 
 
 
 class Administrador(db.Model):
-    _tablename_ = 'administradores'
-    _table_args_ = {'schema': schema_name}
+    __tablename__ = 'administradores'
+    __table_args__ = {'schema': schema_name}
     
     id = db.Column(db.Integer, db.ForeignKey(f'{schema_name}.users.id'), primary_key=True)
     username = db.Column(db.String(50))
@@ -85,7 +85,7 @@ class Administrador(db.Model):
     imagen_url = db.Column(db.String(400), nullable=True,)
     direccion = db.Column(JSONB,)
     edad = db.Column(db.Integer)
-    telefono= db.Column(db.Integer)
+    telefono= db.Column(db.String(10))
     status= db.Column(db.String(100))
     experienciaLaboral = db.Column(db.String(50))
 
@@ -93,6 +93,6 @@ class Administrador(db.Model):
 
     user = db.relationship("User", backref="administrador", uselist=False)
 
-    _mapper_args_ = {
+    __mapper_args__ = {
         'polymorphic_identity': 'administrador',
     }

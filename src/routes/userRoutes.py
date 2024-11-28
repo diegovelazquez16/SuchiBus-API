@@ -16,7 +16,6 @@ from flask_jwt_extended import jwt_required
 
 usuario_blueprint = Blueprint('usuarios', __name__)
 
-# Crear un usuario con bcrypt
 @usuario_blueprint.route('/users', methods=['POST'])
 def crear_usuario_ruta():
     data = request.form.to_dict()  
@@ -24,7 +23,6 @@ def crear_usuario_ruta():
     return crear_usuario(data, file)
 
 
-# Crear usuario sin bcrypt
 @usuario_blueprint.route('/users_base', methods=['POST'])
 def crear_usuario_base_ruta():
     data = request.get_json()
@@ -37,16 +35,12 @@ def actualizar_usuario_base_ruta(id_usuario):
     data = request.get_json()
     return actualizar_usuario_base(id_usuario, data)
 
-# Iniciar sesión
 @usuario_blueprint.route('/login', methods=['POST'])
 def login_ruta():
     data = request.get_json()
     return login_usuario(data)
 
-#@usuario_blueprint.route('/profile', methods=['GET'])
-#@jwt_required()
-#def obtener_usuario_ruta():
-#   return obtener_usuario()
+
 
 @usuario_blueprint.route('/usuarios/me', methods=['GET'])
 @jwt_required()

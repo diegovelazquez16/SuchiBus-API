@@ -169,8 +169,7 @@ def login_usuario(data):
     email = data.get('email')
     password = data.get('password')
 
-    print(f"Email ingresado: {email}")  
-    print(f"Contraseña ingresada: {password}") 
+
 
     user = User.query.filter_by(email=email).first()
 
