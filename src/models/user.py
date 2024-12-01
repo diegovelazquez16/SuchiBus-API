@@ -23,7 +23,7 @@ class User(db.Model):
     nombre = db.Column(db.String(50))
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(300), nullable=False)
-    tipo_usuario = db.Column(Enum("Administrador", "Pasajero", "Chofer", name="role_enum"), nullable=False)
+    tipo_usuario = db.Column(Enum("Administrador", "Pasajero", "Chofer", name="role_enum", clave="iduser"), nullable=False)
 
     def __init__(self, nombre, email, password, tipo_usuario):
         self.nombre = nombre
@@ -50,8 +50,6 @@ class Pasajero(db.Model):
     __mapper_args__ = {
         'polymorphic_identity': 'pasajero',
     }
-
-
 class Chofer(db.Model):
     __tablename__ = 'choferes'
     __table_args__ = {'schema': schema_name}
@@ -66,16 +64,61 @@ class Chofer(db.Model):
     experienciaLaboral = db.Column(db.String(50))
     telefono = db.Column(db.String(10))
     status = db.Column(db.String(100))
+    terminal_id = db.Column(db.Integer, db.ForeignKey(f'{schema_name}.terminales.id'), nullable= False)
 
     user = db.relationship("User", backref="chofer", uselist=False)
 
     __mapper_args__ = {
         'polymorphic_identity': 'chofer',
     }
-
-
-
 class Administrador(db.Model):
+    __tablename__ = 'administradores'
+    __table_args__ = {'schema': schema_name}
+    
+    id = db.Column(db.Integer, db.ForeignKey(f'{schema_name}.users.id'), primary_key=True)
+    username = db.Column(db.String(50))
+    lastname = db.Column(db.String(50))
+    imagen_url = db.Column(db.String(400), nullable=True)
+    direccion = db.Column(JSONB)
+    edad = db.Column(db.Integer)
+    telefono = db.Column(db.String(10))
+    status = db.Column(db.String(100))
+    experienciaLaboral = db.Column(db.String(50))
+
+    user = db.relationship("User", backref="administrador", uselist=False)
+
+    # Relación explícita para evitar la ambigüedad de claves foráneas
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'administrador',
+    }
+
+
+
+""" class Chofer(db.Model):
+    __tablename__ = 'choferes'
+    __table_args__ = {'schema': schema_name}
+
+    id = db.Column(db.Integer, db.ForeignKey(f'{schema_name}.users.id'), primary_key=True)
+    username = db.Column(db.String(50))
+    lastname = db.Column(db.String(50))
+    licencia = db.Column(db.String(100))
+    imagen_url = db.Column(db.String(400), nullable=True)
+    direccion = db.Column(JSONB, nullable=True)
+    edad = db.Column(db.Integer)
+    experienciaLaboral = db.Column(db.String(50))
+    telefono = db.Column(db.String(10))
+    status = db.Column(db.String(100))
+
+    user = db.relationship("User", backref="chofer", uselist=False) 
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'chofer',
+    } """
+
+
+
+""" class Administrador(db.Model):
     __tablename__ = 'administradores'
     __table_args__ = {'schema': schema_name}
     
@@ -95,4 +138,4 @@ class Administrador(db.Model):
 
     __mapper_args__ = {
         'polymorphic_identity': 'administrador',
-    }
+    } """

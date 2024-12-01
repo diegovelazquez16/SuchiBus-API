@@ -46,6 +46,8 @@ def crear_unidad(data, file):
             modelo=data.get("modelo"),
             marca=data.get("marca"),
             fecha_compra=data.get("fecha_compra"),
+            num_asientos=data.get("num_asientos"),
+            actual_cupo=data.get("actual_cupo"),
             imagen_url=file_id,  # Guardamos solo el file_id
             terminal_id=data.get("terminal_id"),
             imagen_archivo=file.filename  # Guardamos el nombre del archivo
@@ -74,6 +76,8 @@ def obtener_unidades():
                 "modelo": unidad.modelo,
                 "marca": unidad.marca,
                 "fecha_compra": unidad.fecha_compra,
+                "num_asientos": unidad.num_asientos,
+                "actual_cupo": unidad.actual_cupo,
                 "terminal_id": unidad.terminal_id,
                 "imagen_archivo": unidad.imagen_archivo,
                 "imagen_url": unidad.imagen_url,
@@ -100,6 +104,8 @@ def obtener_unidad(id):
             "modelo": unidad.modelo,
             "marca": unidad.marca,
             "fecha_compra": unidad.fecha_compra,
+            "num_asientos": unidad.num_asientos,
+            "actual_cupo": unidad.actual_cupo,
             "terminal_id": unidad.terminal_id,
             "imagen_url": unidad.imagen_url,
             "imagen_archivo": unidad.imagen_archivo,
@@ -123,6 +129,8 @@ def obtener_informacion_unidad(id):
             "modelo": unidad.modelo,
             "marca": unidad.marca,
             "fecha_compra": unidad.fecha_compra,
+            "num_asientos": unidad.num_asientos,
+            "actual_cupo": unidad.actual_cupo,
             "terminal_id": unidad.terminal_id,
             "imagen_url": unidad.imagen_url,
             "imagen_archivo": unidad.imagen_archivo
@@ -144,6 +152,8 @@ def actualizar_unidad(id, data, file=None):
             unidad.modelo = data.get('modelo', unidad.modelo)
             unidad.marca = data.get('marca', unidad.marca)
             unidad.fecha_compra = data.get('fecha_compra', unidad.fecha_compra)
+            unidad.num_asientos = data.ge('num_asientos', unidad.num_asientos)
+            unidad.actual_cupo = data.get('actual_cupo', unidad.actual_cupo)
             unidad.terminal_id = data.get('terminal_id', unidad.terminal_id)
 
         if file:
@@ -165,6 +175,8 @@ def actualizar_unidad(id, data, file=None):
             "modelo": unidad.modelo,
             "marca": unidad.marca,
             "fecha_compra": unidad.fecha_compra,
+            "num_asientos": unidad.num_asientos,
+            "actual_cupo": unidad.actual_cupo,
             "terminal_id": unidad.terminal_id
         }
 
@@ -204,6 +216,8 @@ def obtener_unidades_por_terminal(terminal_id):
                 "modelo": unidad.modelo,
                 "marca": unidad.marca,
                 "fecha_compra": unidad.fecha_compra,
+                "num_asientos": unidad.num_asientos,
+                "actual_cupo": unidad.actual_cupo,
                 "imagen_url": unidad.imagen_url,  # Aquí dejas la URL o la referencia
                 "imagen_archivo": unidad.imagen_archivo  # Este es el nombre o referencia del archivo
             }

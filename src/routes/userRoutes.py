@@ -11,6 +11,8 @@ from src.controllers.userController import (
     obtener_imagen_usuario,
     actualizar_usuario_base,
     obtener_usuario_actual,
+    asignar_terminal_admin,
+    obtener_choferes_por_terminal
 )
 from flask_jwt_extended import jwt_required
 
@@ -71,3 +73,13 @@ def eliminar_usuario_ruta(user_id):
 @jwt_required()
 def obtener_imagen_usuario_ruta(id):
     return obtener_imagen_usuario(id)
+
+@usuario_blueprint.route('/administradores/<int:admin_id>/assign-terminal', methods=['PUT'])
+@jwt_required()
+def asignar_terminal_admin_ruta(admin_id):
+    return asignar_terminal_admin(admin_id)
+
+@usuario_blueprint.route('/choferes/<int:terminal_id>', methods=['GET'])
+@jwt_required()
+def obtener_choferes(terminal_id):
+    return obtener_choferes_por_terminal(terminal_id)
