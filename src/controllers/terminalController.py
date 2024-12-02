@@ -19,10 +19,11 @@ def crear_terminal(data):
     horarioCierre = data.get('horarioCierre')
     telefono = data.get('telefono')
     administradorid = data.get('administradorid')
+    ruta_id= data.get('ruta_id')
 
     print(f"Recibido administrador_id: {administradorid}")  # Verificar el valor
 
-    if not all([nombre, cp, calle, num, horarioApertura, horarioCierre, telefono]):
+    if not all([nombre, cp, calle, num, horarioApertura, horarioCierre, telefono, ruta_id]):
         return jsonify({"mensaje": "Faltan campos obligatorios"}), 400
 
     headers = {"APIKEY": SEPOMEX_API_KEY}
@@ -58,6 +59,7 @@ def crear_terminal(data):
                 horarioCierre=horarioCierre,
                 telefono=telefono,
                 administrador_id= administradorid,
+                ruta_id= ruta_id
             )
 
             db.session.add(nueva_terminal)
@@ -121,7 +123,7 @@ def obtener_colonias_por_cp():
         return jsonify({"mensaje": "Error al conectar con la API de Sepomex", "detalles": str(e)}), 500
 
 
-#@jwt_required()
+@jwt_required()
 def obtener_terminal(id):
     terminal = Terminal.query.get(id)
     if not terminal:
@@ -136,11 +138,12 @@ def obtener_terminal(id):
         "horarioApertura": terminal.horarioApertura,
         "horarioCierre": terminal.horarioCierre,
         "telefono": terminal.telefono,
-        'administrador_id': terminal.administrador_id
+        'administrador_id': terminal.administrador_id,
+        "ruta_id": terminal.ruta_id
 
     }), 200
 
-#@jwt_required()
+@jwt_required()
 def obtener_todas_terminales():
     
     terminales = Terminal.query.all()
@@ -151,7 +154,8 @@ def obtener_todas_terminales():
         "horarioApertura": terminal.horarioApertura,
         "horarioCierre": terminal.horarioCierre,
         "telefono": terminal.telefono,
-        'administrador_id': terminal.administrador_id
+        'administrador_id': terminal.administrador_id,
+        "ruta_id": terminal.ruta_id
 
     } for terminal in terminales]
 
@@ -234,7 +238,7 @@ def actualizar_terminal(id_terminal, data):
 
 
 
-#@jwt_required()
+@jwt_required()
 def eliminar_terminal(id):
     terminal = Terminal.query.get(id)
     if not terminal:
@@ -270,4 +274,31 @@ def obtener_unidades_de_terminal(id):
         "nombre": terminal.nombre,
         "unidades": unidades
     }), 200
+    
+    
+def obtener_unidades_de_terminal(id):
+    # Obtener la terminal con el ID proporcionado
+    terminal = Terminal.query.get(id)
+    
+    # Verificar si la terminal existe
+    if not terminal:
+        return jsonify({"mensaje": "Terminal no encontrada"}), 404
+
+    # Obtener las unidades asociadas a la terminal
+    unidades = [{
+        "id": unidad.id,
+        "numPlaca": unidad.numPlaca,
+        "status": unidad.status,
+        "modelo": unidad.modelo,
+        "marca": unidad.marca,
+        "fecha_Compra": unidad.fecha_Compra
+    } for unidad in terminal.unidades]
+
+    # Retornar las unidades en la respuesta JSON
+    return jsonify({
+        "terminal_id": terminal.id,
+        "nombre": terminal.nombre,
+        "unidades": unidades
+    }), 200
+
 
