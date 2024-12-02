@@ -20,16 +20,18 @@ class Terminal(db.Model):
     horarioCierre = db.Column(db.String(100), nullable=False)
     telefono = db.Column(db.BigInteger, nullable=False)
     administrador_id = db.Column(db.Integer, db.ForeignKey(f'{schema_name}.administradores.id'), nullable=False)  
+    ruta_id = db.Column(db.String, nullable= False)
 
 
 
-    def __init__(self, nombre, direccion, horarioApertura, horarioCierre, telefono, administrador_id):
+    def __init__(self, nombre, direccion, horarioApertura, horarioCierre, telefono, administrador_id, ruta_id):
         self.nombre = nombre
         self.horarioApertura = horarioApertura
         self.horarioCierre = horarioCierre
         self.telefono = telefono
         self.direccion = json.dumps(direccion) if direccion else None
         self.administrador_id = administrador_id
+        self.ruta_id = ruta_id
 
     def get_direccion(self):
         return json.loads(self.direccion) if self.direccion else {}
