@@ -89,87 +89,6 @@ def crear_usuario(data, file=None):
 
 
 
-
-""" def crear_usuario(data, file=None):  # file es ahora opcional
-
-    google_drive_url = None  # Valor predeterminado para la imagen
-
-    if file:
-        temp_dir = tempfile.gettempdir()
-        file_path = os.path.join(temp_dir, file.filename)
-        file.save(file_path)
-
-        try:
-            # Subir la imagen a Google Drive
-            file_id = upload_to_drive(file_path, file.filename)
-            google_drive_url = f"https://drive.google.com/uc?id={file_id}"
-        except Exception as e:
-            os.remove(file_path)
-            return jsonify({"mensaje": f"Error al subir la imagen: {str(e)}"}), 500
-
-        # Eliminar archivo temporal
-        os.remove(file_path)
-
-    # Validar tipo de usuario
-    tipo_usuario = data.get("tipo_usuario")
-    if tipo_usuario not in ["Administrador", "Chofer"]:
-        return jsonify({"mensaje": "Tipo de usuario inválido"}), 400
-
-    # Crear el usuario base
-    nuevo_usuario = User(
-        nombre=data.get("nombre"),
-        email=data.get("email"),
-        password=data.get("password"),
-        tipo_usuario=tipo_usuario,
-    )
-    db.session.add(nuevo_usuario)
-    db.session.flush()  # Necesario para obtener el ID del usuario recién creado
-
-    if tipo_usuario == "Chofer":
-        nuevo_chofer = Chofer(
-            id=nuevo_usuario.id,
-            username=data.get("username"),
-            lastname=data.get("lastname"),
-            licencia=data.get("licencia"),
-            imagen_url=google_drive_url,
-            direccion=data.get("direccion"),
-            edad=data.get("edad"),
-            experienciaLaboral= data.get("experienciaLaboral"),
-            telefono= data.get("telefono"),
-            status = data.get("status")
-        )
-        db.session.add(nuevo_chofer)
-    elif tipo_usuario == "Administrador":
-        nuevo_administrador = Administrador(
-            id=nuevo_usuario.id,
-            username=data.get("username"),
-            lastname=data.get("lastname"),
-            imagen_url=google_drive_url,
-            direccion=data.get("direccion"),
-            edad=data.get("edad"),
-            experienciaLaboral= data.get("experienciaLaboral"),
-            telefono= data.get("telefono"),
-            status = data.get("status")
-        )
-        db.session.add(nuevo_administrador)
-
-    # Confirmar transacción
-    db.session.commit()
-
-    # Construir respuesta
-    response = {
-        "mensaje": "Usuario creado con éxito",
-        "id": nuevo_usuario.id,
-        "nombre": nuevo_usuario.nombre,
-        "email": nuevo_usuario.email,
-        "tipo_usuario": nuevo_usuario.tipo_usuario,
-    }
-    if google_drive_url:
-        response["imagen_url"] = google_drive_url
-
-    return jsonify(response), 201 """
-
-
 def crear_usuario_base(data):
     
     from src.models.user import Pasajero
@@ -183,7 +102,7 @@ def crear_usuario_base(data):
 
     if User.query.filter_by(email=email).first():
         return jsonify({"mensaje": "El email ya está registrado"}), 400
-
+    hashed_password = generate_password_hash(password)
     nuevo_usuario = User(
         nombre=nombre, 
         email=email, 
@@ -230,6 +149,8 @@ def actualizar_usuario_base(id_usuario, data):
         usuario.email = email
     if password:
         usuario.password = password
+        hashed_password = generate_password_hash(password)
+        usuario.password = hashed_password
 
     db.session.commit()
 
@@ -246,9 +167,7 @@ def login_usuario(data):
     email = data.get('email')
     password = data.get('password')
 
-    print(f"Email ingresado: {email}")  
-    print(f"Contraseña ingresada: {password}") 
-    #print(f"nombre ingresado {nombre}")
+
 
     user = User.query.filter_by(email=email).first()
 
@@ -285,20 +204,7 @@ def obtener_usuario_actual():
     }), 200
 
 
-#@jwt_required()
-#def obtener_usuario():
-#   user_id = get_jwt_identity()
 
-#    user = User.query.get(user_id)
-
-#   if not user:
-#        return jsonify({"mensaje": "Usuario no encontrado"}), 404
-
-#   return jsonify({
-#        "id": user.id,
-#        "nombre": user.nombre,
-#        "email": user.email
-#    }), 200
 
 #@jwt_required()
 def obtener_todos_usuarios():
@@ -396,6 +302,7 @@ def actualizar_usuario():
     experienciaLaboral = data.get('experienciaLaboral')
     licencia = data.get('licencia')
     username = data.get('username')
+    imagen_url = data.get('imagen_url') 
 
     if nombre:
         user.nombre = nombre
@@ -425,6 +332,8 @@ def actualizar_usuario():
         user.licencia = licencia
     if username:
         user.username = username
+    if imagen_url:
+        user.imagen_url = imagen_url
 
     if file:
         temp_dir = tempfile.gettempdir()

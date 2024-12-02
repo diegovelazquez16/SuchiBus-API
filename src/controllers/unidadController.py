@@ -135,58 +135,67 @@ def obtener_informacion_unidad(id):
             "imagen_url": unidad.imagen_url,
             "imagen_archivo": unidad.imagen_archivo
         }
-
+        return jsonify(respuesta), 200  # Aquí devolvemos la respuesta correctamente
     except Exception as e:
         return jsonify({"error": "Error al obtener la información de la unidad", "detalle": str(e)}), 500
+
 
 
 def actualizar_unidad(id, data, file=None):
     try:
         unidad = Unidad.query.get(id)
-        if unidad is None:
-            return jsonify({"error": "Unidad no encontrada"}), 404
+        if not unidad:
+            return jsonify({"mensaje": "Unidad no encontrada"}), 404
 
         if data:
-            unidad.numPlaca = data.get('numPlaca', unidad.numPlaca)
-            unidad.status = data.get('status', unidad.status)
-            unidad.modelo = data.get('modelo', unidad.modelo)
-            unidad.marca = data.get('marca', unidad.marca)
-            unidad.fecha_compra = data.get('fecha_compra', unidad.fecha_compra)
-            unidad.num_asientos = data.ge('num_asientos', unidad.num_asientos)
-            unidad.actual_cupo = data.get('actual_cupo', unidad.actual_cupo)
-            unidad.terminal_id = data.get('terminal_id', unidad.terminal_id)
+            unidad.numPlaca = data.get("numPlaca", unidad.numPlaca)
+            unidad.status = data.get("status", unidad.status)
+            unidad.modelo = data.get("modelo", unidad.modelo)
+            unidad.marca = data.get("marca", unidad.marca)
+            unidad.fecha_compra = data.get("fecha_compra", unidad.fecha_compra)
+            unidad.num_asientos = data.get("num_asientos", unidad.num_asientos)
+            unidad.actual_cupo = data.get("actual_cupo", unidad.actual_cupo)
+            unidad.terminal_id = data.get("terminal_id", unidad.terminal_id)
 
         if file:
             temp_dir = tempfile.gettempdir()
             file_path = os.path.join(temp_dir, file.filename)
 
-            file.save(file_path)
-            imagen_id = upload_to_drive(file_path, file.filename)  
-            os.remove(file_path)  
+            try:
+                file.save(file_path)
+                imagen_id = upload_to_drive(file_path, file.filename)
+                os.remove(file_path)  
 
-            unidad.imagen_url = f"https://drive.google.com/uc?id={imagen_id}"
+                unidad.imagen_url = f"https://drive.google.com/uc?id={imagen_id}"
+                unidad.imagen_archivo = file.filename
+            except Exception as e:
+                print(f"Error al manejar la imagen: {e}")
+                return jsonify({"mensaje": "Error al procesar la imagen"}), 500
 
         db.session.commit()
 
-        response = {
-            "id": unidad.id,
-            "numPlaca": unidad.numPlaca,
-            "status": unidad.status,
-            "modelo": unidad.modelo,
-            "marca": unidad.marca,
-            "fecha_compra": unidad.fecha_compra,
-            "num_asientos": unidad.num_asientos,
-            "actual_cupo": unidad.actual_cupo,
-            "terminal_id": unidad.terminal_id
-        }
-
-        if unidad.imagen_url:
-            response["imagen_url"] = unidad.imagen_url
-
-        return jsonify(response), 200
+        return jsonify({
+            "mensaje": "Unidad actualizada con éxito",
+            "unidad": {
+                "id": unidad.id,
+                "numPlaca": unidad.numPlaca,
+                "status": unidad.status,
+                "modelo": unidad.modelo,
+                "marca": unidad.marca,
+                "fecha_compra": unidad.fecha_compra,
+                "num_asientos": unidad.num_asientos,
+                "actual_cupo": unidad.actual_cupo,
+                "terminal_id": unidad.terminal_id,
+                "imagen_url": unidad.imagen_url
+            }
+        }), 200
 
     except Exception as e:
-        return jsonify({"error": "Error al actualizar la unidad", "detalle": str(e)}), 500
+        return jsonify({"mensaje": "Error al actualizar la unidad", "detalle": str(e)}), 500
+
+
+
+
 
 def eliminar_unidad(unidad_id):
     unidad = Unidad.query.get(unidad_id)
@@ -227,3 +236,35 @@ def obtener_unidades_por_terminal(terminal_id):
 
     except Exception as e:
         return jsonify({"error": "Error al obtener las unidades", "detalle": str(e)}), 500
+    
+
+
+def actualizar_horarios_unidad(id, data):
+    try:
+        unidad = Unidad.query.get(id)
+        if not unidad:
+            return jsonify({"error": "Unidad no encontrada"}), 404
+
+        horario_entrada = data.get("horario_entrada")
+        horario_salida = data.get("horario_salida")
+
+        if not horario_entrada or not horario_salida:
+            return jsonify({"error": "Se requieren ambos horarios"}), 400
+
+        unidad.horario_entrada = horario_entrada
+        unidad.horario_salida = horario_salida
+
+        db.session.commit()
+
+        response = {
+            "id": unidad.id,
+            "numPlaca": unidad.numPlaca,
+            "horario_entrada": unidad.horario_entrada,
+            "horario_salida": unidad.horario_salida
+        }
+
+        return jsonify(response), 200
+
+    except Exception as e:
+        return jsonify({"error": "Error al actualizar los horarios", "detalle": str(e)}), 500
+

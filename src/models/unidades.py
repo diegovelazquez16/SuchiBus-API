@@ -25,10 +25,14 @@ class Unidad(db.Model):
     imagen_url = db.Column(db.String(400), nullable = False)
     terminal_id = db.Column(db.Integer, db.ForeignKey(f'{schema_name}.terminales.id'), nullable=False)
     imagen_archivo = db.Column(db.String, nullable = True)
+    horario_entrada = db.Column(db.String(20), nullable = False)
+    horario_salida = db.Column(db.String(20), nullable = False)
+
+
 
     terminal = db.relationship('Terminal', backref=db.backref('unidades', lazy=True))
 
-    def __init__(self, numPlaca, status, modelo, marca, fecha_compra, num_asientos, actual_cupo, imagen_url, terminal_id, imagen_archivo):
+    def __init__(self, numPlaca, status, modelo, marca, fecha_compra, num_asientos, actual_cupo, imagen_url, terminal_id, imagen_archivo, horario_entrada, horario_salida):
         self.numPlaca = numPlaca
         self.status = status
         self.modelo = modelo
@@ -39,4 +43,10 @@ class Unidad(db.Model):
         self.imagen_url = imagen_url  # me faltaba esto xd
         self.terminal_id = terminal_id
         self.imagen_archivo = imagen_archivo
+        self.horario_entrada = horario_entrada
+        self.horario_salida = horario_salida
 
+    def actualizar_horarios(self, horario_entrada, horario_salida):
+        self.horario_entrada = horario_entrada
+        self.horario_salida = horario_salida
+        db.session.commit() 
