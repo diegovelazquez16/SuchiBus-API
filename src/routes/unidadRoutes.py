@@ -7,7 +7,8 @@ from src.controllers.unidadController import (
     actualizar_unidad,
     eliminar_unidad, 
     obtener_informacion_unidad,
-    obtener_unidades_por_terminal
+    obtener_unidades_por_terminal,
+    actualizar_horarios_unidad
 )
 
 unidad_blueprint = Blueprint('unidades', __name__)
@@ -44,3 +45,9 @@ def ruta_eliminar_unidad(id):
 @unidad_blueprint.route('/unidades/terminal/<int:terminal_id>', methods=['GET'])
 def ruta_obtener_unidades_por_terminal(terminal_id):
     return obtener_unidades_por_terminal(terminal_id)
+
+@unidad_blueprint.route('/unidades/<int:id>/horarios', methods=['PUT'])
+def ruta_actualizar_horarios_unidad(id):
+    data = request.get_json()
+    return actualizar_horarios_unidad(id, data)
+

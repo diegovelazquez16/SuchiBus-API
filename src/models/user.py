@@ -24,6 +24,7 @@ class User(db.Model):
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(300), nullable=False)
     tipo_usuario = db.Column(Enum("Administrador", "Pasajero", "Chofer", name="role_enum", clave="iduser"), nullable=False)
+    imagen_url = db.Column(db.String(400), nullable=True)
 
     def __init__(self, nombre, email, password, tipo_usuario):
         self.nombre = nombre
