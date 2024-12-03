@@ -16,7 +16,7 @@ from src.controllers.userController import (
 )
 from flask_jwt_extended import jwt_required
 
-usuario_blueprint = Blueprint('usuarios', __name__)
+usuario_blueprint = Blueprint('usuarios', __name__, url_prefix='/usuarios')
 
 @usuario_blueprint.route('/users', methods=['POST'])
 def crear_usuario_ruta():

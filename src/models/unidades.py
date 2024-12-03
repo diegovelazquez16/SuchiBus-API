@@ -42,3 +42,7 @@ class Unidad(db.Model):
         self.terminal_id = terminal_id
         self.imagen_archivo = imagen_archivo
 
+def actualizar_horarios(self, horario_entrada, horario_salida):
+        self.horario_entrada = horario_entrada
+        self.horario_salida = horario_salida
+        db.session.commit()

@@ -233,3 +233,32 @@ def obtener_unidades_por_terminal(terminal_id):
 
     except Exception as e:
         return jsonify({"error": "Error al obtener las unidades", "detalle": str(e)}), 500
+
+def actualizar_horarios_unidad(id, data):
+    try:
+        unidad = Unidad.query.get(id)
+        if not unidad:
+            return jsonify({"error": "Unidad no encontrada"}), 404
+
+        horario_entrada = data.get("horario_entrada")
+        horario_salida = data.get("horario_salida")
+
+        if not horario_entrada or not horario_salida:
+            return jsonify({"error": "Se requieren ambos horarios"}), 400
+
+        unidad.horario_entrada = horario_entrada
+        unidad.horario_salida = horario_salida
+
+        db.session.commit()
+
+        response = {
+            "id": unidad.id,
+            "numPlaca": unidad.numPlaca,
+            "horario_entrada": unidad.horario_entrada,
+            "horario_salida": unidad.horario_salida
+        }
+
+        return jsonify(response), 200
+
+    except Exception as e:
+        return jsonify({"error": "Error al actualizar los horarios", "detalle": str(e)}), 500
