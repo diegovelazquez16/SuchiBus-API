@@ -22,13 +22,7 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # Configuración de CORS para permitir solicitudes desde el dominio y la IP especificados
-    CORS(app, resources={r"/*": {"origins": "http://localhost:4200"}})
-    
-    cors_options = {
-        "origins": "*",
-        "methods": ["GET", "POST", "PUT", "DELETE"],   
-        "allowed_headers": ["Content-Type", "Authorization"]
-        }
+    CORS(app, resources={r"/*": {"origins": "*"}}, methods=["GET", "POST", "PUT", "DELETE"], allow_headers=["Content-Type", "Authorization"])
 
 
     db.init_app(app)
