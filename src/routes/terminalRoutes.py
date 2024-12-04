@@ -5,7 +5,9 @@ from src.controllers.terminalController import (
     obtener_terminal,
     obtener_todas_terminales,
     actualizar_terminal,
-    eliminar_terminal
+    eliminar_terminal,
+    obtener_unidades_de_terminal,
+    obtener_colonias_por_cp
 )
 
 terminal_blueprint = Blueprint('terminales', __name__)
@@ -31,3 +33,12 @@ def ruta_actualizar_terminal(id):
 @terminal_blueprint.route('/terminales/<int:id>', methods=['DELETE'])
 def ruta_eliminar_terminal(id):
     return eliminar_terminal(id)
+
+@terminal_blueprint.route('/terminales/<int:id>/unidades', methods=['GET'])
+def ruta_obtener_unidades_de_terminal(id):
+    return obtener_unidades_de_terminal(id)
+
+@terminal_blueprint.route('/colonias', methods=['GET'])
+def ruta_obtener_colonias():
+    return obtener_colonias_por_cp()
+
